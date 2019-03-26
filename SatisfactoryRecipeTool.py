@@ -71,19 +71,19 @@ def request(recipe, quantityPerMin, exclusionList):
     print('Item choosen : ' + str(quantityPerMin) + ' ' + recipe.name + ' per min')
     ratio = quantityPerMin / recipe.outputPerMin
     for required in recipe.listRequired:
-        recursiveRequest(required, ratio)
+        recursiveRequest(required, ratio, exclusionList)
     
-def recursiveRequest(required, ratio):
+def recursiveRequest(required, ratio, exclusionList):
     nbNeeded = ((ratio * required.inputNeeded) / required.recipe.outputPerMin) * required.recipe.outputPerMin 
     print(required.recipe.name + ' : ' + str(nbNeeded))
     
     newRatio = nbNeeded / required.recipe.outputPerMin
     
-    if(len(required.recipe.listRequired) == 0):
-        print('leaf')
-    else:
-        for subRequired in required.recipe.listRequired:
-            recursiveRequest(subRequired, newRatio)
+    for subRequired in required.recipe.listRequired:
+        if(subRequired.recipe in exclusionList):
+            print('leaf')
+        else:
+            recursiveRequest(subRequired, newRatio, exclusionList)
 
 def main():
     # By default, the algorithm will continue until the very first elements but will not include the cost of the miner(s)

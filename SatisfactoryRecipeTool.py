@@ -67,28 +67,28 @@ modularFrame = Recipe('modular frame', 4, [Requirement(reinforcedIronPlate, 12),
 # Requests
 #------------------------------------------------------------------------------
 
-def request(recipe, quantityPerMin, exclusionList):
+def request(recipe, quantityPerMin, leaves):
     print('Item choosen : ' + str(quantityPerMin) + ' ' + recipe.name + ' per min')
     ratio = quantityPerMin / recipe.outputPerMin
     for required in recipe.listRequired:
-        recursiveRequest(required, ratio, exclusionList)
+        recursiveRequest(required, ratio, leaves)
     
-def recursiveRequest(required, ratio, exclusionList):
+def recursiveRequest(required, ratio, leaves):
     nbNeeded = ((ratio * required.inputNeeded) / required.recipe.outputPerMin) * required.recipe.outputPerMin 
     print(required.recipe.name + ' : ' + str(nbNeeded))
     
     newRatio = nbNeeded / required.recipe.outputPerMin
     
     for subRequired in required.recipe.listRequired:
-        if(subRequired.recipe in exclusionList):
+        if(subRequired.recipe in leaves):
             print('leaf')
         else:
-            recursiveRequest(subRequired, newRatio, exclusionList)
+            recursiveRequest(subRequired, newRatio, leaves)
 
 def main():
     # By default, the algorithm will continue until the very first elements but will not include the cost of the miner(s)
     # To stop the tree searching to a certain point, add it in the inclusive limit list
-    inclusiveLimitList = [ironOre, copperOre, limestoneOre]
-    request(rotor, 6, inclusiveLimitList)
+    leaves = [ironOre, copperOre, limestoneOre]
+    request(rotor, 6, leaves)
 
 main()

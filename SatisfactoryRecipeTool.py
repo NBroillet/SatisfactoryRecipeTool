@@ -74,20 +74,20 @@ def request(recipe, quantityPerMin, leaves):
         recursiveRequest(required, ratio, leaves)
     
 def recursiveRequest(required, ratio, leaves):
-    nbNeeded = ((ratio * required.inputNeeded) / required.recipe.outputPerMin) * required.recipe.outputPerMin 
-    print(required.recipe.name + ' : ' + str(nbNeeded))
+    nbNeeded = ((ratio * required.inputNeeded) / required.recipe.outputPerMin) * required.recipe.outputPerMin
+    nbMachineNeeded = nbNeeded/required.recipe.outputPerMin
     
-    newRatio = nbNeeded / required.recipe.outputPerMin
+    print(required.recipe.name + ' : ' + str(nbNeeded) + ' (' + str(nbMachineNeeded) + ' ' + required.recipe.machine.name + ')')
     
     for subRequired in required.recipe.listRequired:
         if(subRequired.recipe in leaves):
             print('leaf')
         else:
-            recursiveRequest(subRequired, newRatio, leaves)
+            recursiveRequest(subRequired, nbMachineNeeded, leaves)
 
 def main():
     # By default, the algorithm will continue until the very first elements but will not include the cost of the miner(s)
-    # To stop the tree searching to a certain point, add it in the inclusive limit list
+    # To stop the tree searching to a certain point, add it in the leaves list
     leaves = [ironOre, copperOre, limestoneOre]
     request(rotor, 6, leaves)
 

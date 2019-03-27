@@ -6,7 +6,9 @@ Created on Tue Mar 26 11:40:48 2019
 @author: Nicolas Broillet
 @version : 0.1
 """
-# Supposition : smelter at 60 items/min
+import math
+
+# Supposition : smelter at 60 items/min,and no overclocking
 
 class Recipe:
     def __init__(self, name, outputPerMin, listRequired, machine):
@@ -54,7 +56,7 @@ cable = Recipe('cable', 15, [Requirement(wire, 30)], Machine('Constructor'))
 #------------------------------------------------------------------------------
 # Tier 4
 #------------------------------------------------------------------------------
-reinforcedIronPlate = Recipe('reinforced iron plate', 5, [Requirement(ironRod, 120), Requirement(ironPlate, 20)], Machine('Assembler'))
+reinforcedIronPlate = Recipe('reinforced iron plate', 5, [Requirement(screw, 120), Requirement(ironPlate, 20)], Machine('Assembler'))
 rotor = Recipe('rotor', 6, [Requirement(ironRod, 18), Requirement(screw, 132)], Machine('Assembler'))
 
 #------------------------------------------------------------------------------
@@ -71,24 +73,34 @@ def request(recipe, quantityPerMin, leaves):
     print('Item choosen : ' + str(quantityPerMin) + ' ' + recipe.name + ' per min')
     ratio = quantityPerMin / recipe.outputPerMin
     for required in recipe.listRequired:
-        recursiveRequest(required, ratio, leaves)
+        recursiveRequest(required, ratio, leaves, 1)
+    print('----------------------------------------')
     
-def recursiveRequest(required, ratio, leaves):
+def recursiveRequest(required, ratio, leaves, printLevel):
     nbNeeded = ((ratio * required.inputNeeded) / required.recipe.outputPerMin) * required.recipe.outputPerMin
-    nbMachineNeeded = nbNeeded/required.recipe.outputPerMin
+    #nbMachineNeeded = quarter(nbNeeded/required.recipe.outputPerMin)
+    nbMachineNeeded = (nbNeeded/required.recipe.outputPerMin)
     
-    print(required.recipe.name + ' : ' + str(nbNeeded) + ' (' + str(nbMachineNeeded) + ' ' + required.recipe.machine.name + ')')
+    print('   ' * printLevel + required.recipe.name + ' : ' + str(nbNeeded) + ' (' + str(nbMachineNeeded) + ' ' + required.recipe.machine.name + ')')
     
     for subRequired in required.recipe.listRequired:
         if(subRequired.recipe in leaves):
-            print('leaf')
+            #print('   ' * printLevel + 'leaf')
+            print()
         else:
-            recursiveRequest(subRequired, nbMachineNeeded, leaves)
+            recursiveRequest(subRequired, nbMachineNeeded, leaves, printLevel+1)
+
+# Round up to the nearest multiple of 0.25
+def quarter(x):
+    return math.ceil(x*4)/4
 
 def main():
     # By default, the algorithm will continue until the very first elements but will not include the cost of the miner(s)
     # To stop the tree searching to a certain point, add it in the leaves list
     leaves = [ironOre, copperOre, limestoneOre]
     request(rotor, 6, leaves)
+    
+    request(modularFrame, 4, leaves)
+    request(modularFrame, 8, leaves)
 
 main()

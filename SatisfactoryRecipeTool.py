@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar 26 11:40:48 2019 
+Created on Tue Mar 26 11:40:48 2019
 
 @author: Nicolas Broillet
 @version : 0.2
@@ -137,13 +137,41 @@ def recursiveRequest(craftTimePerCycle, required, ratio, leaves, printLevel):
         else:
             recursiveRequest(required.craft.recipes[0].timePerCycle, subRequired, ratio, leaves, printLevel+1)
 
+class Solver:
+    def __init__(self, leaves):
+        self.leaves = leaves
+
+    def craftToRecipe(self, craft):
+        return craft.recipes[0]
+
+    def perMinute(self, craft, bandwidth, depth = 0):
+        self.perSecond(craft, bandwidth/60)
+
+    def perSecond(self, craft, bandwidth, depth = 0):
+        recipe = self.craftToRecipe(craft)
+        operationHz = bandwidth / recipe.outputPerCycle
+        nbMachineNeeded = operationHz * recipe.timePerCycle
+
+        print('   ' * depth + craft.name + ' : ' + str(bandwidth*60) + ' (' + str(nbMachineNeeded) + ' ' + recipe.machine.name + ')')
+
+        for subRequired in recipe.listRequirement:
+            if(subRequired.craft not in self.leaves):
+                self.perSecond(subRequired.craft, operationHz * subRequired.inputPerCycle, depth+1)
+
+
+
 def main():
     # By default, the algorithm will continue until the very first elements
     # To stop the tree searching to a certain point, add it in the leaves list
     leaves = [ironOre, copperOre, limestoneOre]
-    request(rotor, 6, leaves)
-    
-    request(modularFrame, 4, leaves)
-    request(modularFrame, 8, leaves)
+    solver = Solver(leaves)
+    solver.perMinute(rotor, 6)
+    solver.perMinute(modularFrame, 4)
+    solver.perMinute(modularFrame, 8)
+
+    # request(rotor, 6, leaves)
+    #
+    # request(modularFrame, 4, leaves)
+    # request(modularFrame, 8, leaves)
 
 main()

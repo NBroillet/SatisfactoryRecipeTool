@@ -113,30 +113,6 @@ assembler.addRecipe(Recipe(assembler, 1, 1, [Requirement(modularFrame, 3), Requi
 #------------------------------------------------------------------------------
 # Requests
 #------------------------------------------------------------------------------
-
-def request(craft, quantityPerMin, leaves):
-    print('Item choosen : ' + str(quantityPerMin) + ' ' + craft.name + ' per min')
-    outputPerMin = 60 / craft.recipes[0].timePerCycle * craft.recipes[0].outputPerCycle
-    
-    ratio = quantityPerMin / outputPerMin
-    for required in craft.recipes[0].listRequirement:
-        recursiveRequest(craft.recipes[0].timePerCycle, required, ratio, leaves, 1)
-    print('----------------------------------------')
-    
-def recursiveRequest(craftTimePerCycle, required, ratio, leaves, printLevel):
-    outputPerMin = (60 / required.craft.recipes[0].timePerCycle) * required.craft.recipes[0].outputPerCycle
-    nbNeededPerMin = required.inputPerCycle * (60 / craftTimePerCycle) * ratio
-    nbMachineNeeded = nbNeededPerMin / outputPerMin
-    
-    print('   ' * printLevel + required.craft.name + ' : ' + str(nbNeededPerMin) + ' (' + str(nbMachineNeeded) + ' ' + required.craft.recipes[0].machine.name + ')')
-    
-    for subRequired in required.craft.recipes[0].listRequirement:
-        if(subRequired.craft.recipes[0] in leaves):
-            #print('   ' * printLevel + 'leaf')
-            print()
-        else:
-            recursiveRequest(required.craft.recipes[0].timePerCycle, subRequired, ratio, leaves, printLevel+1)
-
 class Solver:
     def __init__(self, leaves):
         self.leaves = leaves
@@ -144,8 +120,13 @@ class Solver:
     def craftToRecipe(self, craft):
         return craft.recipes[0]
 
+    def perMinuteDefault(self, craft):
+        recipe = self.craftToRecipe(craft)
+        self.perMinute(craft, recipe.outputPerCycle * (60/recipe.timePerCycle), 0)
+
     def perMinute(self, craft, bandwidth, depth = 0):
         self.perSecond(craft, bandwidth/60)
+        print('--------------------------------------------------------------')
 
     def perSecond(self, craft, bandwidth, depth = 0):
         recipe = self.craftToRecipe(craft)
@@ -158,8 +139,6 @@ class Solver:
             if(subRequired.craft not in self.leaves):
                 self.perSecond(subRequired.craft, operationHz * subRequired.inputPerCycle, depth+1)
 
-
-
 def main():
     # By default, the algorithm will continue until the very first elements
     # To stop the tree searching to a certain point, add it in the leaves list
@@ -168,10 +147,6 @@ def main():
     solver.perMinute(rotor, 6)
     solver.perMinute(modularFrame, 4)
     solver.perMinute(modularFrame, 8)
-
-    # request(rotor, 6, leaves)
-    #
-    # request(modularFrame, 4, leaves)
-    # request(modularFrame, 8, leaves)
+    solver.perMinuteDefault(modularFrame)
 
 main()

@@ -118,6 +118,12 @@ class Ctx:
         self.items = {}
         self.machines = {}
 
+def itemQuantityToString(quantity):
+    if quantity >= 10:
+        return str(int(quantity))
+    else:
+        return "{:.2g}".format(quantity)
+
 class Solver:
     def __init__(self, leaves):
         self.leaves = leaves
@@ -147,7 +153,7 @@ class Solver:
             self.ctx.items[craft] = self.ctx.items.get(craft, 0) + bandwidth
         self.ctx.machines[recipe.machine] = self.ctx.machines.get(recipe.machine, 0) + nbMachineNeeded
 
-        print('   ' * depth + craft.name + ' : ' + str(bandwidth*60) + ' (' + str(nbMachineNeeded) + ' ' + recipe.machine.name + ')')
+        print("{}{} : {} ({} {})".format('   ' * depth, craft.name, itemQuantityToString(bandwidth*60), itemQuantityToString(nbMachineNeeded), recipe.machine.name))
 
         for subRequired in recipe.listRequirement:
             if(subRequired.craft not in self.leaves):
@@ -157,10 +163,11 @@ class Solver:
         if depth == 0:
             print("Belts : ")
             for i, count in self.ctx.items.items():
-                print('   ' + i.name + ' : ' + str(count * 60))
+                print("   {} : {}".format( i.name,  itemQuantityToString(count*60)))
+
             print("Machines : ")
             for i, count in self.ctx.machines.items():
-                print('   ' + i.name + ' : ' + str(count))
+                print("   {} : {}".format( i.name,  itemQuantityToString(count)))
 
 def main():
     # By default, the algorithm will continue until the very first elements
@@ -169,7 +176,7 @@ def main():
     solver = Solver(leaves)
     solver.perMinute(rotor, 6)
     solver.perMinute(modularFrame, 4)
-    solver.perMinute(modularFrame, 8)
+    solver.perMinute(modularFrame, 8000)
     solver.perMinuteDefault(modularFrame)
 
 main()

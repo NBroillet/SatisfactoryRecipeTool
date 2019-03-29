@@ -113,9 +113,15 @@ assembler.addRecipe(Recipe(assembler, 1, 1, [Requirement(modularFrame, 3), Requi
 #------------------------------------------------------------------------------
 # Requests
 #------------------------------------------------------------------------------
+class Ctx:
+    def __init__(self):
+        self.items = {}
+        self.machines = {}
+
 class Solver:
     def __init__(self, leaves):
         self.leaves = leaves
+        self.ctx = None
 
     def craftToRecipe(self, craft):
         return craft.recipes[0]
@@ -128,16 +134,33 @@ class Solver:
         self.perSecond(craft, bandwidth/60)
         print('--------------------------------------------------------------')
 
+
+
     def perSecond(self, craft, bandwidth, depth = 0):
         recipe = self.craftToRecipe(craft)
         operationHz = bandwidth / recipe.outputPerCycle
         nbMachineNeeded = operationHz * recipe.timePerCycle
+
+        if depth == 0:
+            self.ctx = Ctx()
+        else:
+            self.ctx.items[craft] = self.ctx.items.get(craft, 0) + bandwidth
+        self.ctx.machines[recipe.machine] = self.ctx.machines.get(recipe.machine, 0) + nbMachineNeeded
 
         print('   ' * depth + craft.name + ' : ' + str(bandwidth*60) + ' (' + str(nbMachineNeeded) + ' ' + recipe.machine.name + ')')
 
         for subRequired in recipe.listRequirement:
             if(subRequired.craft not in self.leaves):
                 self.perSecond(subRequired.craft, operationHz * subRequired.inputPerCycle, depth+1)
+
+
+        if depth == 0:
+            print("Belts : ")
+            for i, count in self.ctx.items.items():
+                print('   ' + i.name + ' : ' + str(count * 60))
+            print("Machines : ")
+            for i, count in self.ctx.machines.items():
+                print('   ' + i.name + ' : ' + str(count))
 
 def main():
     # By default, the algorithm will continue until the very first elements

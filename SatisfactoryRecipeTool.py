@@ -169,8 +169,7 @@ class Solver:
         if depth == 0:
             self.ctx = Ctx()
             print('--------------------------------------------------------------')
-        else:
-            self.ctx.items[craft] = self.ctx.items.get(craft, 0) + bandwidth
+        self.ctx.items[craft] = self.ctx.items.get(craft, 0) + bandwidth
         self.ctx.machines[recipe.machine] = self.ctx.machines.get(recipe.machine, 0) + nbMachineNeeded
 
         print("{}{} : {} ({} {})".format('   ' * depth, craft.name, itemQuantityToString(bandwidth*60), itemQuantityToString(nbMachineNeeded), recipe.machine.name))
@@ -201,7 +200,7 @@ def main():
     sum = Ctx()
     sum.merge(solver.perMinute(reinforcedIronPlate, 10).print())
     sum.merge(solver.perMinute(rotor, 6).print())
-    sum.merge(solver.perMinute(modularFrame, 4).print())
+    sum.merge(solver.perMinute(modularFrame, 2).print())
     print('--------------------------------------------------------------')
     print("Factory 1 :")
     sum.print()

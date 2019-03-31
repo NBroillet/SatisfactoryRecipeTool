@@ -118,6 +118,25 @@ class Ctx:
         self.items = {}
         self.machines = {}
 
+    def print(self):
+        print("Belts : ")
+        for i, count in self.items.items():
+            print("   {} : {}".format(i.name, itemQuantityToString(count * 60)))
+
+        print("Machines : ")
+        for i, count in self.machines.items():
+            print("   {} : {}".format(i.name, itemQuantityToString(count)))
+
+        return self
+
+    def merge(self, that):
+        for i, count in that.items.items():
+            self.items[i] = self.items.get(i, 0) + count
+        for i, count in that.machines.items():
+            self.machines[i] = self.machines.get(i, 0) + count
+
+
+
 def itemQuantityToString(quantity):
     if quantity >= 10:
         return str(int(quantity))
@@ -138,7 +157,7 @@ class Solver:
 
     def perMinute(self, craft, bandwidth, depth = 0):
         self.perSecond(craft, bandwidth/60)
-        print('--------------------------------------------------------------')
+        return self.ctx
 
 
 
@@ -149,6 +168,7 @@ class Solver:
 
         if depth == 0:
             self.ctx = Ctx()
+            print('--------------------------------------------------------------')
         else:
             self.ctx.items[craft] = self.ctx.items.get(craft, 0) + bandwidth
         self.ctx.machines[recipe.machine] = self.ctx.machines.get(recipe.machine, 0) + nbMachineNeeded
@@ -160,14 +180,8 @@ class Solver:
                 self.perSecond(subRequired.craft, operationHz * subRequired.inputPerCycle, depth+1)
 
 
-        if depth == 0:
-            print("Belts : ")
-            for i, count in self.ctx.items.items():
-                print("   {} : {}".format( i.name,  itemQuantityToString(count*60)))
 
-            print("Machines : ")
-            for i, count in self.ctx.machines.items():
-                print("   {} : {}".format( i.name,  itemQuantityToString(count)))
+
 
 def main():
     # By default, the algorithm will continue until the very first elements
@@ -175,8 +189,21 @@ def main():
     leaves = [ironOre, copperOre, limestoneOre]
     solver = Solver(leaves)
     solver.perMinute(rotor, 6)
-    solver.perMinute(modularFrame, 4)
+    solver.perMinute(modularFrame, 10)
     solver.perMinute(modularFrame, 8000)
     solver.perMinuteDefault(modularFrame)
+
+
+    print("***")
+    print("***")
+
+    solver.perMinute(modularFrame, 10).print()
+    sum = Ctx()
+    sum.merge(solver.perMinute(reinforcedIronPlate, 10).print())
+    sum.merge(solver.perMinute(rotor, 6).print())
+    sum.merge(solver.perMinute(modularFrame, 4).print())
+    print('--------------------------------------------------------------')
+    print("Factory 1 :")
+    sum.print()
 
 main()

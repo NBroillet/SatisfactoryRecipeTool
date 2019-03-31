@@ -12,8 +12,10 @@ class Craft:
     def __init__(self, name):
         self.name = name
         self.recipes = []
+
     def addRecipe(self, recipe):
         self.recipes.append(recipe)
+        return recipe
 
 # time per cycle in seconds
 class Recipe:
@@ -80,7 +82,8 @@ wire.addRecipe(Recipe(wire, 3, 4, [Requirement(copperIngot, 1)], constructor, 1)
 # Tier 3
 #------------------------------------------------------------------------------
 screw = Craft('Screw')
-screw.addRecipe(Recipe(screw, 6, 4, [Requirement(ironRod, 1)], constructor, 2))
+standardScrewReceipe =screw.addRecipe(Recipe(screw, 6, 4, [Requirement(ironRod, 1)], constructor, 2))
+alternativeScrewReceipe = screw.addRecipe(Recipe(screw, 12, 8, [Requirement(ironIngot, 2)], constructor, 2))
 
 cable = Craft('Cable')
 cable.addRecipe(Recipe(cable, 1, 4, [Requirement(wire, 2)], constructor, 1))
@@ -147,9 +150,19 @@ class Solver:
     def __init__(self, leaves):
         self.leaves = leaves
         self.ctx = None
+        self.favorites = []
 
     def craftToRecipe(self, craft):
-        return craft.recipes[0]
+        if len(craft.recipes) == 1:
+            return craft.recipes[0]
+
+        hit = []
+        for r in craft.recipes:
+            if r in self.favorites:
+                hit.append(r)
+
+        assert(len(hit) == 1)
+        return hit[0]
 
     def perMinuteDefault(self, craft):
         recipe = self.craftToRecipe(craft)
@@ -169,6 +182,7 @@ class Solver:
         if depth == 0:
             self.ctx = Ctx()
             print('--------------------------------------------------------------')
+
         self.ctx.items[craft] = self.ctx.items.get(craft, 0) + bandwidth
         self.ctx.machines[recipe.machine] = self.ctx.machines.get(recipe.machine, 0) + nbMachineNeeded
 
@@ -187,6 +201,7 @@ def main():
     # To stop the tree searching to a certain point, add it in the leaves list
     leaves = [ironOre, copperOre, limestoneOre]
     solver = Solver(leaves)
+    solver.favorites.append(alternativeScrewReceipe)
     solver.perMinute(rotor, 6)
     solver.perMinute(modularFrame, 10)
     solver.perMinute(modularFrame, 8000)
@@ -204,5 +219,8 @@ def main():
     print('--------------------------------------------------------------')
     print("Factory 1 :")
     sum.print()
+
+    # ♥
+    solver.perMinute(reinforcedIronPlate, 15)
 
 main()

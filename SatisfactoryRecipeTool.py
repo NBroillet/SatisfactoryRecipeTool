@@ -12,8 +12,10 @@ class Craft:
     def __init__(self, name):
         self.name = name
         self.recipes = []
+
     def addRecipe(self, recipe):
         self.recipes.append(recipe)
+        return recipe
 
 # time per cycle in seconds
 class Recipe:
@@ -80,7 +82,8 @@ wire.addRecipe(Recipe(wire, 3, 4, [Requirement(copperIngot, 1)], constructor, 1)
 # Tier 3
 #------------------------------------------------------------------------------
 screw = Craft('Screw')
-screw.addRecipe(Recipe(screw, 6, 4, [Requirement(ironRod, 1)], constructor, 2))
+standardScrewReceipe =screw.addRecipe(Recipe(screw, 6, 4, [Requirement(ironRod, 1)], constructor, 2))
+alternativeScrewReceipe = screw.addRecipe(Recipe(screw, 12, 8, [Requirement(ironIngot, 2)], constructor, 2))
 
 cable = Craft('Cable')
 cable.addRecipe(Recipe(cable, 1, 4, [Requirement(wire, 2)], constructor, 1))
@@ -113,12 +116,53 @@ assembler.addRecipe(Recipe(assembler, 1, 1, [Requirement(modularFrame, 3), Requi
 #------------------------------------------------------------------------------
 # Requests
 #------------------------------------------------------------------------------
+class Ctx:
+    def __init__(self):
+        self.items = {}
+        self.machines = {}
+
+    def print(self):
+        print("Belts : ")
+        for i, count in self.items.items():
+            print("   {} : {}".format(i.name, itemQuantityToString(count * 60)))
+
+        print("Machines : ")
+        for i, count in self.machines.items():
+            print("   {} : {}".format(i.name, itemQuantityToString(count)))
+
+        return self
+
+    def merge(self, that):
+        for i, count in that.items.items():
+            self.items[i] = self.items.get(i, 0) + count
+        for i, count in that.machines.items():
+            self.machines[i] = self.machines.get(i, 0) + count
+
+
+
+def itemQuantityToString(quantity):
+    if quantity >= 10:
+        return str(int(quantity))
+    else:
+        return "{:.2g}".format(quantity)
+
 class Solver:
     def __init__(self, leaves):
         self.leaves = leaves
+        self.ctx = None
+        self.favorites = []
 
     def craftToRecipe(self, craft):
-        return craft.recipes[0]
+        if len(craft.recipes) == 1:
+            return craft.recipes[0]
+
+        hit = []
+        for r in craft.recipes:
+            if r in self.favorites:
+                hit.append(r)
+
+        assert(len(hit) == 1)
+        return hit[0]
 
     def perMinuteDefault(self, craft):
         recipe = self.craftToRecipe(craft)
@@ -126,18 +170,31 @@ class Solver:
 
     def perMinute(self, craft, bandwidth, depth = 0):
         self.perSecond(craft, bandwidth/60)
-        print('--------------------------------------------------------------')
+        return self.ctx
+
+
 
     def perSecond(self, craft, bandwidth, depth = 0):
         recipe = self.craftToRecipe(craft)
         operationHz = bandwidth / recipe.outputPerCycle
         nbMachineNeeded = operationHz * recipe.timePerCycle
 
-        print('   ' * depth + craft.name + ' : ' + str(bandwidth*60) + ' (' + str(nbMachineNeeded) + ' ' + recipe.machine.name + ')')
+        if depth == 0:
+            self.ctx = Ctx()
+            print('--------------------------------------------------------------')
+
+        self.ctx.items[craft] = self.ctx.items.get(craft, 0) + bandwidth
+        self.ctx.machines[recipe.machine] = self.ctx.machines.get(recipe.machine, 0) + nbMachineNeeded
+
+        print("{}{} : {} ({} {})".format('   ' * depth, craft.name, itemQuantityToString(bandwidth*60), itemQuantityToString(nbMachineNeeded), recipe.machine.name))
 
         for subRequired in recipe.listRequirement:
             if(subRequired.craft not in self.leaves):
                 self.perSecond(subRequired.craft, operationHz * subRequired.inputPerCycle, depth+1)
+
+
+
+
 
 def main():
     # By default, the algorithm will continue until the very first elements
@@ -145,9 +202,26 @@ def main():
     leaves = [ironOre, copperOre, limestoneOre]
     #leaves = []
     solver = Solver(leaves)
+    solver.favorites.append(alternativeScrewReceipe)
     solver.perMinute(rotor, 6)
-    solver.perMinute(modularFrame, 4)
-    solver.perMinute(modularFrame, 8)
+    solver.perMinute(modularFrame, 10)
+    solver.perMinute(modularFrame, 8000)
     solver.perMinuteDefault(modularFrame)
+
+
+    print("***")
+    print("***")
+
+    solver.perMinute(modularFrame, 10).print()
+    sum = Ctx()
+    sum.merge(solver.perMinute(reinforcedIronPlate, 10).print())
+    sum.merge(solver.perMinute(rotor, 6).print())
+    sum.merge(solver.perMinute(modularFrame, 2).print())
+    print('--------------------------------------------------------------')
+    print("Factory 1 :")
+    sum.print()
+
+    # ♥
+    solver.perMinute(reinforcedIronPlate, 15)
 
 main()

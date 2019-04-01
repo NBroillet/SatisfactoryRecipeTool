@@ -143,6 +143,7 @@ def main():
     # By default, the algorithm will continue until the very first elements
     # To stop the tree searching to a certain point, add it in the leaves list
     leaves = [ironOre, copperOre, limestoneOre]
+    #leaves = []
     solver = Solver(leaves)
     solver.perMinute(rotor, 6)
     solver.perMinute(modularFrame, 4)
